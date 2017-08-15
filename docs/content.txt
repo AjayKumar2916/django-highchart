@@ -1,0 +1,188 @@
+Django HighCharts
+
+A web application doesn’t attract if it doesn’t have any graphical representation such as images or any other form of media. An image representation can make a website interactive thus giving a user a nice overview. A basic example of using multimedia in our application can be the use of charts.
+
+Highcharts is a chart library that has been written in pure javascript, offering an easy way of adding interactive charts to your web site or web application. Highcharts currently supports many chart types, including line, spline, area, areaspline, column, bar, etc. In this article we going use Column Chart and we will see how to integrate with data form djago database.
+
+Lets consider a table called RainFall,
+
+from django.db import models
+
+class RainFall(models.Model):
+	month = models.CharField(max_length=128)
+	centimeter = models.IntegerField()
+
+	def __str__(self):
+		return self.month
+
+Register the model to django admin,
+
+admin.py
+
+from django.contrib import admin
+
+from models import RainFall
+
+class RainFallAdmin(admin.ModelAdmin):
+	list_display = ['month', 'centimeter']
+
+admin.site.register(RainFall, RainFallAdmin)
+
+And I have populated some data into it via django admin.
+
+Image
+
+Now lets create a view and a template
+
+views.py
+
+from django.shortcuts import render
+
+def home(request, template_name="home.html"):
+	args = {}
+	return render(request, template_name, args)
+
+To make highcharts work, we need to include two js file jquery.js and highcharts.js in the template
+
+home.html
+
+<script type="text/javascript" src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+<script type="text/javascript" src="https://code.highcharts.com/highcharts.js"></script>
+
+<div>
+	<div align="center">
+		<h1>Django HighCharts</h1>
+	</div>
+</div>
+
+Next we will take an example code of a HighChart form here http://jsfiddle.net/sy6xg9rv/1/
+
+Image
+
+Here in the example code the category data and series data looks like python list , so we need to make our Rainfall Table data to this list format and pass the arguments to the template
+
+from models import RainFall
+
+data = RainFall.objects.all()
+
+month_list = [] # Category data
+centimeter_list = [] # Series data
+for d in data:
+	month_list.append(d.month)
+	centimeter_list.append(d.centimeter)
+
+And Hence finally the views looks like this,
+
+views.py
+
+from django.shortcuts import render
+
+from models import RainFall
+
+def home(request, template_name="home.html"):
+	args = {}
+
+	data = RainFall.objects.all()
+
+	month_list = [] # Category data
+	centimeter_list = [] # Series data
+	for d in data:
+		month_list.append(d.month)
+		centimeter_list.append(d.centimeter)
+	
+	args['month_list'] = month_list
+	args['centimeter_list'] = centimeter_list
+	return render(request, template_name, args)
+
+Here the two data(month_list and centimeter_list) passing to the template in python list type, Hence Highchart is in pure javascript, it will not support python list type so we need to convert the two data list from python list type to JavaScript JSON type For that we need to install a django package call djang-jsonify from here https://pypi.python.org/pypi/django-jsonify/0.2.1. and use it as a Django template filter
+
+To install you can use pip
+
+pip install django-jsonify
+
+Then add jsonify to the INSTALLED_APPS in setings file
+
+settings.py
+
+INSTALLED_APPS = [
+    ........
+    ........
+    'jsonify',
+]
+
+Now load the jsonify in the template and hence the final template will look like this,
+
+{% load jsonify %}
+<div>
+	<div align="center">
+		<h1>Django HighCharts</h1>
+	</div>
+	<div>
+		<div id="container" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
+	</div>
+</div>
+<script type="text/javascript" src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+<script type="text/javascript" src="https://code.highcharts.com/highcharts.js"></script>
+<script type="text/javascript">
+Highcharts.chart('container', {
+    chart: {
+        type: 'column'
+    },
+    title: {
+        text: 'Monthly Rainfall'
+    },
+    subtitle: {
+        text: ''
+    },
+    xAxis: {
+        categories: {{month_list|jsonify}},
+        crosshair: true
+    },
+    yAxis: {
+        min: 0,
+        title: {
+            text: 'Rainfall (cm)'
+        }
+    },
+    tooltip: {
+        headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+        pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+            '<td style="padding:0"><b>{point.y:.1f} cm</b></td></tr>',
+        footerFormat: '</table>',
+        shared: true,
+        useHTML: true
+    },
+    plotOptions: {
+        column: {
+            pointPadding: 0.2,
+            borderWidth: 0
+        }
+    },
+    series: [{
+        name: 'India',
+        data: {{centimeter_list|jsonify}},
+
+    }]
+});
+</script>
+
+That's it and now we can enjoy the HighChart with the data from django database.
+
+You will find the source code here.
+
+I hope you enjoyed this article, if you face any issues or problem, please feel free to give your feedbacks in the comment secton.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

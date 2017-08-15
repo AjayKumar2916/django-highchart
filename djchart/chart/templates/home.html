@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% load jsonify %}
+{% block title %}Django HighCharts{% endblock %}
+{% block content %}
+<div>
+	<div align="center">
+		<h1>Django HighCharts</h1>
+	</div>
+	<div>
+		<div id="container" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
+	</div>
+</div>
+<script type="text/javascript" src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+<script type="text/javascript" src="https://code.highcharts.com/highcharts.js"></script>
+<script type="text/javascript">
+Highcharts.chart('container', {
+    chart: {
+        type: 'column'
+    },
+    title: {
+        text: 'Monthly Rainfall'
+    },
+    subtitle: {
+        text: ''
+    },
+    xAxis: {
+        categories: {{month_list|jsonify}},
+        crosshair: true
+    },
+    yAxis: {
+        min: 0,
+        title: {
+            text: 'Rainfall (cm)'
+        }
+    },
+    tooltip: {
+        headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+        pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+            '<td style="padding:0"><b>{point.y:.1f} cm</b></td></tr>',
+        footerFormat: '</table>',
+        shared: true,
+        useHTML: true
+    },
+    plotOptions: {
+        column: {
+            pointPadding: 0.2,
+            borderWidth: 0
+        }
+    },
+    series: [{
+        name: 'India',
+        data: {{centimeter_list|jsonify}},
+
+    }]
+});
+</script>
+{% endblock %}
