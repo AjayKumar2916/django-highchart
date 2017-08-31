@@ -1,7 +1,6 @@
 from django.conf.urls import url
-
-from chart import views
+from .views import home
 
 urlpatterns = [
-    url(r'^$', views.home, name='home'),
+    url(r'^$', home, name='home'),
 ]
