@@ -24,4 +24,4 @@ rainfall_data = [
 for data in rainfall_data:
 	RainFall.objects.create(**data)
 
-print "Data populated"
+print('Data populated')
